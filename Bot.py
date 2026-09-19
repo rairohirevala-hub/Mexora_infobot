@@ -1,33 +1,100 @@
 import os
+import re
 import asyncio
+import threading
+
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    ContextTypes,
+)
 
-TOKEN = os.getenv("BOT_TOKEN")
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+PORT = int(os.getenv("PORT", "10000"))
+
+
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Mexora Info Bot is running")
+
+    def log_message(self, format, *args):
+        return
+
+
+def start_web_server():
+    server = HTTPServer(("0.0.0.0", PORT), HealthHandler)
+    server.serve_forever()
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Hello! 👋\n\n"
-        "Mexora Info Bot ready aa.\n\n"
-        "Public business info lookup layi /check likho."
+        "👋 Welcome to Mexora Info Bot!\n\n"
+        "Main public business information te "
+        "user-consented verification vich help kar sakda haan.\n\n"
+        "Phone number, Gmail ya UPI ID bhejo "
+        "format check karan layi.\n\n"
+        "⚠️ Private owner details, personal Gmail "
+        "ya hidden information retrieve nahi karda."
     )
 
 
-async def check(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def lookup(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text(
+            "Usage:\n/lookup your_phone_or_upi"
+        )
+        return
+
+    value = " ".join(context.args).strip()
+
+    if len(value) > 200:
+        await update.message.reply_text("Input bahut lamba hai.")
+        return
+
+    if "@" in value:
+        result = "Email/UPI format detected."
+    elif re.fullmatch(r"[0-9]{10}", value):
+        result = "Phone number format detected."
+    else:
+        result = "Input received."
+
     await update.message.reply_text(
-        "UPI ID / phone number bhejo.\n\n"
-        "Main sirf publicly available business details "
-        "check karan layi help kar sakda haan."
+        f"✅ {result}\n\n"
+        "Eh bot private owner details ya "
+        "personal Gmail retrieve nahi karda.\n"
+        "Public business verification layi "
+        "official sources use karo."
+    )
+
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "/start - Bot start karo\n"
+        "/lookup - Input format check karo\n"
+        "/help - Help"
     )
 
 
 async def main():
-    app = Application.builder().token(TOKEN).build()
+    if not BOT_TOKEN:
+        raise RuntimeError("BOT_TOKEN environment variable missing")
+
+    threading.Thread(
+        target=start_web_server,
+        daemon=True
+    ).start()
+
+    app = Application.builder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("check", check))
+    app.add_handler(CommandHandler("lookup", lookup))
+    app.add_handler(CommandHandler("help", help_command))
 
     await app.initialize()
     await app.start()
