@@ -1,14 +1,14 @@
-
 import os
 import re
+import asyncio
+
 from telegram import Update
 from telegram.ext import (
     Application,
     CommandHandler,
-    MessageHandler,
     ContextTypes,
-    filters,
 )
+
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
@@ -39,11 +39,9 @@ async def lookup(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if "@" in value:
-        result = "Email format detected."
+        result = "Email/UPI format detected."
     elif re.fullmatch(r"[0-9]{10}", value):
         result = "Phone number format detected."
-    elif re.fullmatch(r"[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+", value):
-        result = "UPI ID format detected."
     else:
         result = "Input received."
 
@@ -64,7 +62,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-def main():
+async def main():
     if not BOT_TOKEN:
         raise RuntimeError("BOT_TOKEN environment variable missing")
 
@@ -74,8 +72,17 @@ def main():
     app.add_handler(CommandHandler("lookup", lookup))
     app.add_handler(CommandHandler("help", help_command))
 
-    app.run_polling()
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
+
+    try:
+        await asyncio.Event().wait()
+    finally:
+        await app.updater.stop()
+        await app.stop()
+        await app.shutdown()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
