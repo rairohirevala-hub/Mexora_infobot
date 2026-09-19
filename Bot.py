@@ -19,14 +19,18 @@ async def check(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "check karan layi help kar sakda haan."
     )
 
-async def main():
+def main():
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("check", check))
 
-    await app.run_polling()
+    import asyncio
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    app.run_polling()
+
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    main()
