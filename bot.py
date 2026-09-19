@@ -2,7 +2,7 @@ import os
 import re
 import asyncio
 import threading
-
+import requests
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from telegram import Update
@@ -52,7 +52,12 @@ async def lookup(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     value = " ".join(context.args).strip()
-
+    if re.fullmatch(r"[0-9]{10}", value):
+        await update.message.reply_text(
+            "🔎 Public business search hun add kar rahe haan.\n"
+            "Private owner details retrieve nahi karda."
+        )
+        return
     if len(value) > 200:
         await update.message.reply_text("Input bahut lamba hai.")
         return
