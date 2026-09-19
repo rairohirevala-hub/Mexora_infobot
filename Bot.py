@@ -52,12 +52,47 @@ async def lookup(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     value = " ".join(context.args).strip()
-    if re.fullmatch(r"[0-9]{10}", value):
-        await update.message.reply_text(
-            "🔎 Public business search hun add kar rahe haan.\n"
-            "Private owner details retrieve nahi karda."
+  if re.fullmatch(r"[0-9]{10}", value):
+    await update.message.reply_text("🔎 Public business information search ho rahi hai...")
+
+    try:
+        response = await asyncio.to_thread(
+            requests.get,
+            "https://nominatim.openstreetmap.org/search",
+            params={
+                "q": value,
+                "format": "json",
+                "addressdetails": 1,
+                "limit": 5,
+            },
+            headers={
+                "User-Agent": "Mexora_infobot/1.0"
+            },
+            timeout=10,
         )
-        return
+
+        results = response.json()
+
+        if not results:
+            await update.message.reply_text(
+                "❌ Is number naal koi public business/place information nahi mili."
+            )
+            return
+
+        message = "📍 Public information found:\n\n"
+
+        for item in results:
+            name = item.get("display_name", "Unknown place")
+            message += f"• {name}\n"
+
+        await update.message.reply_text(message)
+
+    except Exception:
+        await update.message.reply_text(
+            "⚠️ Public search temporarily unavailable."
+        )
+
+    return
     if len(value) > 200:
         await update.message.reply_text("Input bahut lamba hai.")
         return
