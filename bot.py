@@ -106,59 +106,56 @@ async def lookup(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return
 
- if "@" in value:
-    await update.message.reply_text(
-        "🔎 Public business information check ho rahi hai..."
-    )
-
-    try:
-        response = await asyncio.to_thread(
-            requests.get,
-            "https://nominatim.openstreetmap.org/search",
-            params={
-                "q": value,
-                "format": "json",
-                "addressdetails": 1,
-                "limit": 5,
-            },
-            headers={
-                "User-Agent": "Mexora_infobot/1.0"
-            },
-            timeout=10,
-        )
-
-        results = response.json()
-
-        if not results:
-            await update.message.reply_text(
-                "❌ Is UPI/Email naal koi public "
-                "business/place information nahi mili."
-            )
-            return
-
-        message = "📍 Public information found:\n\n"
-
-        for item in results:
-            name = item.get(
-                "display_name",
-                "Unknown place"
-            )
-            message += f"• {name}\n"
-
-        await update.message.reply_text(message)
-
-    except Exception:
+    if "@" in value:
         await update.message.reply_text(
-            "⚠️ Public search temporarily unavailable."
+            "🔎 Public business information check ho rahi hai..."
         )
 
-    return
+        try:
+            response = await asyncio.to_thread(
+                requests.get,
+                "https://nominatim.openstreetmap.org/search",
+                params={
+                    "q": value,
+                    "format": "json",
+                    "addressdetails": 1,
+                    "limit": 5,
+                },
+                headers={
+                    "User-Agent": "Mexora_infobot/1.0"
+                },
+                timeout=10,
+            )
 
-else:
-    result = "Input received."
+            results = response.json()
+
+            if not results:
+                await update.message.reply_text(
+                    "❌ Is UPI/Email naal koi public "
+                    "business/place information nahi mili."
+                )
+                return
+
+            message = "📍 Public information found:\n\n"
+
+            for item in results:
+                name = item.get(
+                    "display_name",
+                    "Unknown place"
+                )
+                message += f"• {name}\n"
+
+            await update.message.reply_text(message)
+
+        except Exception:
+            await update.message.reply_text(
+                "⚠️ Public search temporarily unavailable."
+            )
+
+        return
 
     await update.message.reply_text(
-        f"✅ {result}\n\n"
+        "✅ Input received.\n\n"
         "Eh bot private owner details ya "
         "personal Gmail retrieve nahi karda.\n"
         "Public business verification layi "
