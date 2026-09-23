@@ -160,7 +160,7 @@ else:
     await update.message.reply_text(
         f"✅ {result}\n\n"
         "Eh bot private owner details ya "
-        "personal Gmail retrieve karda.\n"
+        "personal Gmail retrieve nahi karda.\n"
         "Public business verification layi "
         "official sources use karo."
     )
